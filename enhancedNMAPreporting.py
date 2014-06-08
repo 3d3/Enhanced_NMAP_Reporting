@@ -7,8 +7,7 @@
 #           FH Technikum Wien
 #----------------------------------------------------------------------------#
 
-__author__ = 'Markus Edelhofer'
-__author__ = 'Hannes Trunde'
+__author__ = 'Markus Edelhofer, Hannes Trunde'
 
 import os
 import sys
@@ -28,6 +27,12 @@ tempDir = config.get("PathVariables", "tempDir")
 workDir = config.get("PathVariables", "workDir")
 
 verbose = True
+
+pre_switch = "-T4 -sP -n"
+post_switch = "-vv -T4 --open --host-timeout 30m -iL ${tempFile}"
+post_switch = "${post_switch} -oN ${OUTPUT}.txt -oX ${OUTPUT}.xml"
+post_switch = "${post_switch} -oG ${OUTPUT}_go.txt"
+post_tswitch = "-sS --top-ports 3328"
 
 #----------------------------------------------------------------------------#
 # check function
