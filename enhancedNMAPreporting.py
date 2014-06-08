@@ -26,7 +26,7 @@ xslProc = config.get("externalTools", "xslProc")
 tempDir = config.get("PathVariables", "tempDir")
 workDir = config.get("PathVariables", "workDir")
 
-verbose = False
+verbose = True
 
 #----------------------------------------------------------------------------#
 # check function
