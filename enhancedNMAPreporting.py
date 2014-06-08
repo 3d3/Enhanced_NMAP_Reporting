@@ -2,12 +2,13 @@
 
 #= Enhanced NMAP Reporting ==================================================#
 # author:   Markus Edelhofer
-# author:   Hannes Trunde Neu2
+# author:   Hannes Trunde
 # date:     2014-06-08
 #           FH Technikum Wien
 #----------------------------------------------------------------------------#
 
 __author__ = 'Markus Edelhofer'
+__author__ = 'Hannes Trunde'
 
 import os
 import sys
@@ -57,7 +58,6 @@ def CheckFunction():
 print('Enhanced NMAP Reporting:\n------------------------\n')
 
 CheckFunction()
-
 
 
 
