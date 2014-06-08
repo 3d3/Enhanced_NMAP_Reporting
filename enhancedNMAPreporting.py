@@ -151,7 +151,7 @@ def getParameter(argv):
 
 #----------------------------------------------------------------------------#
 # namp scan
-def namp():
+def nmap():
    print("Start Scan:")
    bashCommand = '"' + nMAP + pre_switch + " | awk '/^Nmap scan/{print $5}'" + '"'
    print(bashCommand)
@@ -192,7 +192,7 @@ def main(argv):
    getParameter(argv)
    CheckOS()
    CheckFunction()
-   namp()
+   nmap()
 
    print('ENDE ;)')
 
