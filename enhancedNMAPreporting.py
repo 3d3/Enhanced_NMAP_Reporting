@@ -11,6 +11,7 @@ __author__ = 'Markus Edelhofer, Hannes Trunde'
 
 import os
 import sys
+import platform
 import ConfigParser
 
 #----------------------------------------------------------------------------#
@@ -20,11 +21,6 @@ config.read("./enhancedNMAPreporting.conf")
 
 #----------------------------------------------------------------------------#
 # variables
-nMAP = config.get("externalTools", "nMAP")
-xslProc = config.get("externalTools", "xslProc")
-
-tempDir = config.get("PathVariables", "tempDir")
-workDir = config.get("PathVariables", "workDir")
 
 verbose = True
 
@@ -33,6 +29,32 @@ post_switch = "-vv -T4 --open --host-timeout 30m -iL ${tempFile}"
 post_switch = "${post_switch} -oN ${OUTPUT}.txt -oX ${OUTPUT}.xml"
 post_switch = "${post_switch} -oG ${OUTPUT}_go.txt"
 post_tswitch = "-sS --top-ports 3328"
+
+#----------------------------------------------------------------------------#
+# check OS
+
+def CheckOS():
+   osVar = platform.system()
+   global nMAP
+   global xslProc
+   global tempDir
+   global workDir
+
+   if(osVar == 'Linux'):
+      nMAP = config.get("externalToolsLinux", "nMAP")
+      xslProc = config.get("externalToolsLinux", "xslProc")
+
+      tempDir = config.get("PathVariablesLinux", "tempDir")
+      workDir = config.get("PathVariablesLinux", "workDir")
+   elif(osVar == 'Windows'):
+      nMAP = config.get("externalToolsWindows", "nMAP")
+      xslProc = config.get("externalToolsWindows", "xslProc")
+
+      tempDir = config.get("PathVariablesWindows", "tempDir")
+      workDir = config.get("PathVariablesWindows", "workDir")
+   else:
+      print('ERROR: Wrong OS')
+      exit()
 
 #----------------------------------------------------------------------------#
 # check function
@@ -62,6 +84,7 @@ def CheckFunction():
 
 print('Enhanced NMAP Reporting:\n------------------------\n')
 
+CheckOS()
 CheckFunction()
 
 
