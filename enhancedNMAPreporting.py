@@ -2,7 +2,7 @@
 
 #= Enhanced NMAP Reporting ==================================================#
 # author:   Markus Edelhofer
-# author:   Hannes Trunde aaa
+# author:   Hannes Trunde
 # date:     2014-06-08
 #           FH Technikum Wien
 #----------------------------------------------------------------------------#
