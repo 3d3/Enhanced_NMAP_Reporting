@@ -34,13 +34,11 @@ except:
 
 #----------------------------------------------------------------------------#
 # variables
-
 verbose = False
 xmlFile = ""
 
 pre_switch = " -T4 -sP -n"
 post_switch = " -vv -T4 --open --host-timeout 30m"
-post_switch = post_switch + " -oX " + xmlFile +".xml"
 post_tswitch = " -sS --top-ports 3328"
 
 #----------------------------------------------------------------------------#
@@ -109,7 +107,9 @@ def CheckFunction():
       if not checkWORKDIR:
          os.mkdir(workDir)
          checkWORKDIR = os.path.isdir(workDir)
-         print('Create work Directory .... ' + str(checkWORKDIR) + '\n');
+         print('Create work Directory .... ' + str(checkWORKDIR));
+      print('-------------------------------')
+
 
    if not (checkUID and checkNMAP and checkXSLPROC and checkMAINDIR and
               checkNSADIR):
@@ -163,7 +163,7 @@ def getParameter(argv):
       pre_switch = pre_switch + " -PA80,113,443,10042"
 
    if(options.optALL):
-      post_tswitch = post_tswitch + " -sS -p-"
+      post_tswitch = " -sS -p-"
 
    if (options.optSSL):
       post_switch = post_switch + " -p" + tlsPorts
@@ -191,45 +191,55 @@ def getParameter(argv):
 #----------------------------------------------------------------------------#
 # namp scan
 def nmap():
-   print("\n\rStart Scan:\n\r----------")
    tmpFile = tempfile.NamedTemporaryFile()
-   try:
-      scanarea = " "
-      for ip in args:
-         scanarea = scanarea + " " + ip
+   scanArea = ""
+   for ip in args:
+      scanArea = scanArea + " " + ip
 
-      os.system(nMAP + pre_switch + scanarea + '> ' + tmpFile.name)
+   print("Scan for hosts at" + scanArea)
+   os.system(nMAP + pre_switch + scanArea + '> ' + tmpFile.name)
 
-      target = " "
-      for ip in tmpFile:
-         pattern = str(ip.split()[4:5])
-         if re.search('(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})', pattern):
-            target = target + pattern
+   target = ""
+   for ip in tmpFile:
+      pattern = str(ip.split()[4:5])
+      if re.search('(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})', pattern):
+         target = target + pattern
+         target = target.replace("['", "")
+         target = target.replace("']", " ")
 
-      if (hostonly):
-         output = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".txt"
-         outputfile = open(output, "w")
-         outputfile.write("Reachable hosts at " + scanarea)
-         for ip in target:
-            outputfile.write("\n".join(ip))
-      else:
-         #xmlFile
-         print("ToDo")
+   if (hostonly):
+      output = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".txt"
+      outputfile = open(output, "w")
+      outputfile.write("Reachable hosts at " + scanArea + "\n")
+      target = target.replace(" ", "\n")
+      outputfile.write(target)
+      outputfile.close()
+   else:
+      print("Start with fast nmap scan on discover hosts")
+      xmlFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".xml "
+      logFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".log"
+      errFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".err"
+      os.system(nMAP + post_switch + " -oX " + xmlFile + target +
+                " > " + logFile + " 2> " + errFile)
 
-   except:
-      print("ERROR: Can't create tmp-File")
+      htmlFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".html"
+
+      os.system(xslProc + " " + xmlFile + "-o " + htmlFile + " 2> " + errFile)
 
 #----------------------------------------------------------------------------#
 # main function
 def main(argv):
    print('Enhanced NMAP Reporting:\n------------------------')
 
+   t1 = time.time()
    CheckOS()
    getParameter(argv)
    CheckFunction()
    nmap()
+   t2 = time.time()
 
-   print('-------------\n\rScan finished')
+   print "Time it took to call", callable, ": "
+   print('Scan finished in ', t2 - t1 '\n\r')
 
 if __name__ == "__main__":
    main(sys.argv[1:])
