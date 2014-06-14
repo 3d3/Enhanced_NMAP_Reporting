@@ -17,3 +17,13 @@ xslProc:    /bin/xsltproc
 mainDir:    <tbd>/enr
 nsaDir:     <tbd>/nsa
 workDir:    <tbd>/output
+
+[nmapSSLnsaScripts]
+url:        http://nmap.org/svn/scripts/
+script.1:   ssl-cert.nse
+script.2:   ssl-enum-ciphers.nse
+script.3:   sslv2.nse
+script.4:   sshv1.nse
+script.5:   ssl-known-key.nse
+script.6:   ssl-heartbleed.nse
+script.7:   ssl-ccs-injection.nse

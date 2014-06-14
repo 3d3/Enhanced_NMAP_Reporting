@@ -13,6 +13,7 @@ import os
 import re
 import sys
 import time
+import urllib
 import platform
 import tempfile
 import ConfigParser
@@ -108,8 +109,8 @@ def CheckFunction():
          os.mkdir(workDir)
          checkWORKDIR = os.path.isdir(workDir)
          print('Create work Directory .... ' + str(checkWORKDIR));
+      print('Check nsa Scripts ........ ' + str(nsaCheck()));
       print('-------------------------------')
-
 
    if not (checkUID and checkNMAP and checkXSLPROC and checkMAINDIR and
               checkNSADIR):
@@ -166,7 +167,7 @@ def getParameter(argv):
       post_tswitch = " -sS -p-"
 
    if (options.optSSL):
-      post_switch = post_switch + " -p" + tlsPorts
+      post_switch = post_switch + " --script " + nsaDir  + " -p" + tlsPorts
 
    if (options.optCUS):
       post_switch = post_switch + " " + cusCom
@@ -189,6 +190,33 @@ def getParameter(argv):
    post_switch = post_switch + post_tswitch
 
 #----------------------------------------------------------------------------#
+# nmap nsa scripts
+def nsaCheck():
+   getconf = True
+   returnCode = True
+   conf = 0
+   try:
+      url = config.get("nmapSSLnsaScripts", "url")
+   except:
+      print('ERROR: No NSA-URL declared')
+      returnCode = False
+
+   while getconf:
+      conf += 1
+      scriptNumber = "script." + str(conf)
+      try:
+         script = config.get("nmapSSLnsaScripts", scriptNumber)
+         scirptPath = nsaDir + "/" + script
+         if not (os.path.isfile(scirptPath)):
+            print('Download NSA Script....... ' + str(script));
+            uri = url + script
+            urllib.urlretrieve (uri, scirptPath)
+      except:
+         getconf = False
+
+   return returnCode
+
+#----------------------------------------------------------------------------#
 # namp scan
 def nmap():
    tmpFile = tempfile.NamedTemporaryFile()
@@ -200,19 +228,19 @@ def nmap():
    os.system(nMAP + pre_switch + scanArea + '> ' + tmpFile.name)
 
    target = ""
-   for ip in tmpFile:
-      pattern = str(ip.split()[4:5])
-      if re.search('(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})', pattern):
-         target = target + pattern
-         target = target.replace("['", "")
-         target = target.replace("']", " ")
+   targetArea = tmpFile.read().split()
+   for item in targetArea:
+      if len( item.split(".") ) == 4:
+         item = item.replace("(", "")
+         item = item.replace(")", " ")
+         target = target + item
 
    if (hostonly):
       output = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".txt"
       outputfile = open(output, "w")
       outputfile.write("Reachable hosts at " + scanArea + "\n")
       target = target.replace(" ", "\n")
-      outputfile.write(target)
+      outputfile.write(str(target))
       outputfile.close()
    else:
       print("Start with fast nmap scan on discover hosts")
@@ -231,15 +259,12 @@ def nmap():
 def main(argv):
    print('Enhanced NMAP Reporting:\n------------------------')
 
-   t1 = time.time()
    CheckOS()
    getParameter(argv)
    CheckFunction()
    nmap()
-   t2 = time.time()
 
-   print "Time it took to call", callable, ": "
-   print('Scan finished in ', t2 - t1 '\n\r')
+   print('Scan finished.')
 
 if __name__ == "__main__":
    main(sys.argv[1:])

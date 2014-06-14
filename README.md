@@ -16,7 +16,6 @@ Supported OS:
  - Windows 7
 
 Planed features:
- - Fast nmap Network Scan
  - TLS Cert. check
  - TLS CipherSuite report
  - Network Reports (Ports, Services)
