@@ -10,7 +10,6 @@
 __author__ = 'Markus Edelhofer, Hannes Trunde'
 
 import os
-import re
 import sys
 import time
 import urllib
@@ -49,7 +48,7 @@ def CheckOS():
    global nMAP
    global xslProc
    global mainDir
-   global nsaDir
+   global nseDir
    global workDir
    global tlsPorts
    global cusCom
@@ -62,7 +61,7 @@ def CheckOS():
       xslProc = config.get("externalToolsLinux", "xslProc")
 
       mainDir = config.get("PathVariablesLinux", "mainDir")
-      nsaDir = config.get("PathVariablesLinux", "nsaDir")
+      nseDir = config.get("PathVariablesLinux", "nseDir")
       workDir = config.get("PathVariablesLinux", "workDir")
 
    elif(osVar == 'Windows'):
@@ -70,7 +69,7 @@ def CheckOS():
       xslProc = config.get("externalToolsWindows", "xslProc")
 
       mainDir = config.get("PathVariablesWindows", "mainDir")
-      nsaDir = config.get("PathVariablesWindows", "nsaDir")
+      nseDir = config.get("PathVariablesWindows", "nseDir")
       workDir = config.get("PathVariablesWindows", "workDir")
 
    else:
@@ -83,7 +82,7 @@ def CheckFunction():
    checkNMAP = os.path.isfile(nMAP)
    checkXSLPROC = os.path.isfile(xslProc)
    checkMAINDIR = os.path.isdir(mainDir)
-   checkNSADIR = os.path.isdir(nsaDir)
+   checkNSEDIR = os.path.isdir(nseDir)
    checkWORKDIR = os.path.isdir(workDir)
 
    uid = os.geteuid()
@@ -99,21 +98,21 @@ def CheckFunction():
       print('Check nmap ............... ' + str(checkNMAP));
       print('Check xsltproc ........... ' + str(checkXSLPROC));
       print('Check main  Directory .... ' + str(checkMAINDIR));
-      print('Check nsa Directory ...... ' + str(checkNSADIR));
-      if not checkNSADIR:
-         os.mkdir(nsaDir)
-         checkNSADIR = os.path.isdir(nsaDir)
-         print('Create nsa Directory ..... ' + str(checkNSADIR));
+      print('Check nse Directory ...... ' + str(checkNSEDIR));
+      if not checkNSEDIR:
+         os.mkdir(nseDir)
+         checkNSEDIR = os.path.isdir(nseDir)
+         print('Create nse Directory ..... ' + str(checkNSEDIR));
       print('Check Output Directory ... ' + str(checkWORKDIR));
       if not checkWORKDIR:
          os.mkdir(workDir)
          checkWORKDIR = os.path.isdir(workDir)
          print('Create work Directory .... ' + str(checkWORKDIR));
-      print('Check nsa Scripts ........ ' + str(nsaCheck()));
+      print('Check nse Scripts ........ ' + str(nseCheck()));
       print('-------------------------------')
 
    if not (checkUID and checkNMAP and checkXSLPROC and checkMAINDIR and
-              checkNSADIR):
+              checkNSEDIR):
       if not (verbose):
          print('ERROR: Use -v for more Information')
       else:
@@ -167,7 +166,7 @@ def getParameter(argv):
       post_tswitch = " -sS -p-"
 
    if (options.optSSL):
-      post_switch = post_switch + " --script " + nsaDir  + " -p" + tlsPorts
+      post_switch = post_switch + " --script " + nseDir  + " -d -p" + tlsPorts
 
    if (options.optCUS):
       post_switch = post_switch + " " + cusCom
@@ -190,25 +189,25 @@ def getParameter(argv):
    post_switch = post_switch + post_tswitch
 
 #----------------------------------------------------------------------------#
-# nmap nsa scripts
-def nsaCheck():
+# nmap nse scripts
+def nseCheck():
    getconf = True
    returnCode = True
    conf = 0
    try:
-      url = config.get("nmapSSLnsaScripts", "url")
+      url = config.get("nmapSSLnseScripts", "url")
    except:
-      print('ERROR: No NSA-URL declared')
+      print('ERROR: No NSE-URL declared')
       returnCode = False
 
    while getconf:
       conf += 1
       scriptNumber = "script." + str(conf)
       try:
-         script = config.get("nmapSSLnsaScripts", scriptNumber)
-         scirptPath = nsaDir + "/" + script
+         script = config.get("nmapSSLnseScripts", scriptNumber)
+         scirptPath = nseDir + "/" + script
          if not (os.path.isfile(scirptPath)):
-            print('Download NSA Script....... ' + str(script));
+            print('Download NSE Script....... ' + str(script));
             uri = url + script
             urllib.urlretrieve (uri, scirptPath)
       except:
@@ -219,24 +218,29 @@ def nsaCheck():
 #----------------------------------------------------------------------------#
 # namp scan
 def nmap():
+   output = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".txt"
+   xmlFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".xml "
+   logFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".log"
+   errFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".err"
+
    tmpFile = tempfile.NamedTemporaryFile()
    scanArea = ""
    for ip in args:
       scanArea = scanArea + " " + ip
 
    print("Scan for hosts at" + scanArea)
-   os.system(nMAP + pre_switch + scanArea + '> ' + tmpFile.name)
+   os.system(nMAP + pre_switch + scanArea + '> ' + tmpFile.name +
+             " 2> " + errFile)
 
    target = ""
    targetArea = tmpFile.read().split()
    for item in targetArea:
       if len( item.split(".") ) == 4:
          item = item.replace("(", "")
-         item = item.replace(")", " ")
-         target = target + item
+         item = item.replace(")", "")
+         target = target + " " + item
 
    if (hostonly):
-      output = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".txt"
       outputfile = open(output, "w")
       outputfile.write("Reachable hosts at " + scanArea + "\n")
       target = target.replace(" ", "\n")
@@ -244,10 +248,7 @@ def nmap():
       outputfile.close()
    else:
       print("Start with fast nmap scan on discover hosts")
-      xmlFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".xml "
-      logFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".log"
-      errFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".err"
-      os.system(nMAP + post_switch + " -oX " + xmlFile + target +
+      os.system("cd /opt/enr/nse && " + nMAP + post_switch + " -oX " + xmlFile + target +
                 " > " + logFile + " 2> " + errFile)
 
       htmlFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".html"
