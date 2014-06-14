@@ -19,8 +19,12 @@ from optparse import OptionParser
 
 #----------------------------------------------------------------------------#
 # load config file
-config = ConfigParser.ConfigParser()
-config.read("./enhancedNMAPreporting.conf")
+try:
+   config = ConfigParser.ConfigParser()
+   config.read("enhancedNMAPreporting.conf")
+except:
+    print('ERROR: Configuration File not found!')
+    sys.exit(1)
 
 #----------------------------------------------------------------------------#
 # variables
@@ -38,21 +42,30 @@ def CheckOS():
    osVar = platform.system()
    global nMAP
    global xslProc
-   global tempDir
+   global mainDir
+   global nsaDir
    global workDir
+   global tempDir
+
 
    if(osVar == 'Linux'):
       nMAP = config.get("externalToolsLinux", "nMAP")
       xslProc = config.get("externalToolsLinux", "xslProc")
 
-      tempDir = config.get("PathVariablesLinux", "tempDir")
+      mainDir = config.get("PathVariablesLinux", "mainDir")
+      nsaDir = config.get("PathVariablesLinux", "nsaDir")
       workDir = config.get("PathVariablesLinux", "workDir")
+      tempDir = config.get("PathVariablesLinux", "tempDir")
+
+
    elif(osVar == 'Windows'):
       nMAP = config.get("externalToolsWindows", "nMAP")
       xslProc = config.get("externalToolsWindows", "xslProc")
 
-      tempDir = config.get("PathVariablesWindows", "tempDir")
+      mainDir = config.get("PathVariablesWindows", "mainDir")
+      nsaDir = config.get("PathVariablesWindows", "nsaDir")
       workDir = config.get("PathVariablesWindows", "workDir")
+      tempDir = config.get("PathVariablesWindows", "tempDir")
    else:
       print('ERROR: Wrong OS')
       sys.exit(1)
@@ -62,8 +75,12 @@ def CheckOS():
 def CheckFunction():
    checkNMAP = os.path.isfile(nMAP)
    checkXSLPROC = os.path.isfile(xslProc)
-   checkTEMPDIR = os.path.isdir(tempDir)
+   checkMAINDIR = os.path.isdir(mainDir)
+
+   checkNSADIR = os.path.isdir(nsaDir)
    checkWORKDIR = os.path.isdir(workDir)
+   checkTEMPDIR = os.path.isdir(tempDir)
+
    uid = os.geteuid()
 
    if os.geteuid() == 0:
@@ -73,11 +90,21 @@ def CheckFunction():
 
    if(verbose):
       print('Enviroment check:\n-----------------')
-      print('Check if root .......... ' + str(checkUID));
-      print('Check nmap ............. ' + str(checkNMAP));
-      print('Check xsltproc ......... ' + str(checkXSLPROC));
-      print('Check temp Directory ... ' + str(checkTEMPDIR));
-      print('Check work Directory ... ' + str(checkWORKDIR) + '\n');
+      print('Check if root ............ ' + str(checkUID));
+      print('Check nmap ............... ' + str(checkNMAP));
+      print('Check xsltproc ........... ' + str(checkXSLPROC));
+      print('Check main  Directory .... ' + str(checkMAINDIR));
+      print('Check nsa Directory ...... ' + str(checkNSADIR));
+      if not checkNSADIR:
+         os.mkdir(nsaDir)
+         checkNSADIR = os.path.isdir(nsaDir)
+         print('Create nsa Directory ..... ' + str(checkNSADIR));
+      print('Check Output Directory ... ' + str(checkWORKDIR));
+      if not checkWORKDIR:
+         os.mkdir(workDir)
+         checkWORKDIR = os.path.isdir(workDir)
+         print('Create work Directory .... ' + str(checkWORKDIR));
+      print('Check temp Directory ..... ' + str(checkTEMPDIR) + '\n');
 
    if not (checkNMAP and checkXSLPROC and checkTEMPDIR and checkWORKDIR
    and checkUID):
