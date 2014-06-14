@@ -34,7 +34,7 @@ verbose = False
 pre_switch = " -T4 -sP -n"
 post_switch = " -vv -T4 --open --host-timeout 30m -iL ${tempFile}"
 post_switch = post_switch + " -oX ${OUTPUT}.xml"
-post_tswitch = "-sS --top-ports 3328"
+post_tswitch = " -sS --top-ports 3328"
 
 #----------------------------------------------------------------------------#
 # check OS
@@ -46,7 +46,11 @@ def CheckOS():
    global nsaDir
    global workDir
    global tempDir
+   global tlsPorts
+   global cusCom
 
+   tlsPorts = config.get("nmapParameter", "tlsPorts")
+   cusCom = config.get("nmapParameter", "cusCom")
 
    if(osVar == 'Linux'):
       nMAP = config.get("externalToolsLinux", "nMAP")
@@ -124,12 +128,14 @@ def getParameter(argv):
                      default=False, help="Scan over Internet")
    parser.add_option("-a", "--all", action="store_true", dest="optALL",
                      default=False, help="scan for all ports")
+   parser.add_option("-s", "--ssl", action="store_true", dest="optSSL",
+                     default=False, help="mix of SSL checks")
+   parser.add_option("-c", "--custom", action="store_true", dest="optCUS",
+                     default=False, help="Custom nmap parameter")
    parser.add_option("-v", action="store_true", dest="optVERB",
                      default=False, help="Schwafelmodus")
    parser.add_option("--ext", action="store_true", dest="optEXT",
                      default=False, help="DNS, OS and Version detection")
-   parser.add_option("--ssl", action="store_true", dest="optSSL",
-                     default=False, help="mix of SSL checks")
    parser.add_option("--PU", action="store_true", dest="optPU",
                      default=False, help="UDP host detection")
    parser.add_option("--sU", action="store_true", dest="optSU",
@@ -143,6 +149,8 @@ def getParameter(argv):
    global post_switch
    global post_tswitch
    global hostonly
+   global tlsPorts
+   global cusCom
 
    (options, args) = parser.parse_args()
    verbose = options.optVERB
@@ -156,13 +164,16 @@ def getParameter(argv):
    if(options.optALL):
       post_tswitch = post_tswitch + " -sS -p-"
 
+   if (options.optSSL):
+      post_switch = post_switch + " -p" + tlsPorts
+
+   if (options.optCUS):
+      post_switch = post_switch + " " + cusCom
+
    if (options.optEXT):
       post_switch = post_switch + " -sV --version-all -O"
    else:
       post_switch = post_switch + " -n"
-
-   if (options.optEXT):
-      post_switch = post_switch + " "
 
    if(options.optPU):
       pre_switch = pre_switch + " -PU"
@@ -182,6 +193,11 @@ def nmap():
    print("Start Scan:")
    bashCommand = '"' + nMAP + pre_switch + " | awk '/^Nmap scan/{print $5}'" + '"'
    print(bashCommand)
+   print("---------")
+   print(tlsPorts + " " + cusCom)
+   print(pre_switch)
+   print(post_switch)
+   print(post_tswitch)
 
    #output = subprocess.Popen([bashCommand], shell=True, stdout=subprocess.PIPE)
    #print "program output:", output
@@ -216,9 +232,9 @@ def nmap():
 def main(argv):
    print('Enhanced NMAP Reporting:\n------------------------')
 
-   getParameter(argv)
    CheckOS()
    CheckFunction()
+   getParameter(argv)
    nmap()
 
    print('ENDE ;)')
