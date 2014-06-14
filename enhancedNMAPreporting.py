@@ -10,12 +10,18 @@
 __author__ = 'Markus Edelhofer, Hannes Trunde'
 
 import os
+import re
 import sys
+import time
 import platform
 import tempfile
-import subprocess
 import ConfigParser
 from optparse import OptionParser
+
+#----------------------------------------------------------------------------#
+# check python version
+if sys.version_info[0] != 2:
+   print "\n\rThis script is only tested with Python 2.7\n\r"
 
 #----------------------------------------------------------------------------#
 # load config file
@@ -30,10 +36,11 @@ except:
 # variables
 
 verbose = False
+xmlFile = ""
 
 pre_switch = " -T4 -sP -n"
-post_switch = " -vv -T4 --open --host-timeout 30m -iL ${tempFile}"
-post_switch = post_switch + " -oX ${OUTPUT}.xml"
+post_switch = " -vv -T4 --open --host-timeout 30m"
+post_switch = post_switch + " -oX " + xmlFile +".xml"
 post_tswitch = " -sS --top-ports 3328"
 
 #----------------------------------------------------------------------------#
@@ -45,7 +52,6 @@ def CheckOS():
    global mainDir
    global nsaDir
    global workDir
-   global tempDir
    global tlsPorts
    global cusCom
 
@@ -59,8 +65,6 @@ def CheckOS():
       mainDir = config.get("PathVariablesLinux", "mainDir")
       nsaDir = config.get("PathVariablesLinux", "nsaDir")
       workDir = config.get("PathVariablesLinux", "workDir")
-      tempDir = config.get("PathVariablesLinux", "tempDir")
-
 
    elif(osVar == 'Windows'):
       nMAP = config.get("externalToolsWindows", "nMAP")
@@ -69,7 +73,7 @@ def CheckOS():
       mainDir = config.get("PathVariablesWindows", "mainDir")
       nsaDir = config.get("PathVariablesWindows", "nsaDir")
       workDir = config.get("PathVariablesWindows", "workDir")
-      tempDir = config.get("PathVariablesWindows", "tempDir")
+
    else:
       print('ERROR: Wrong OS')
       sys.exit(1)
@@ -80,10 +84,8 @@ def CheckFunction():
    checkNMAP = os.path.isfile(nMAP)
    checkXSLPROC = os.path.isfile(xslProc)
    checkMAINDIR = os.path.isdir(mainDir)
-
    checkNSADIR = os.path.isdir(nsaDir)
    checkWORKDIR = os.path.isdir(workDir)
-   checkTEMPDIR = os.path.isdir(tempDir)
 
    uid = os.geteuid()
 
@@ -107,11 +109,10 @@ def CheckFunction():
       if not checkWORKDIR:
          os.mkdir(workDir)
          checkWORKDIR = os.path.isdir(workDir)
-         print('Create work Directory .... ' + str(checkWORKDIR));
-      print('Check temp Directory ..... ' + str(checkTEMPDIR) + '\n');
+         print('Create work Directory .... ' + str(checkWORKDIR) + '\n');
 
-   if not (checkNMAP and checkXSLPROC and checkTEMPDIR and checkWORKDIR
-   and checkUID):
+   if not (checkUID and checkNMAP and checkXSLPROC and checkMAINDIR and
+              checkNSADIR):
       if not (verbose):
          print('ERROR: Use -v for more Information')
       else:
@@ -190,42 +191,33 @@ def getParameter(argv):
 #----------------------------------------------------------------------------#
 # namp scan
 def nmap():
-   print("Start Scan:")
-   bashCommand = '"' + nMAP + pre_switch + " | awk '/^Nmap scan/{print $5}'" + '"'
-   print(bashCommand)
-   print("---------")
-   print(tlsPorts + " " + cusCom)
-   print(pre_switch)
-   print(post_switch)
-   print(post_tswitch)
+   print("\n\rStart Scan:\n\r----------")
+   tmpFile = tempfile.NamedTemporaryFile()
+   try:
+      scanarea = " "
+      for ip in args:
+         scanarea = scanarea + " " + ip
 
-   #output = subprocess.Popen([bashCommand], shell=True, stdout=subprocess.PIPE)
-   #print "program output:", output
+      os.system(nMAP + pre_switch + scanarea + '> ' + tmpFile.name)
 
+      target = " "
+      for ip in tmpFile:
+         pattern = str(ip.split()[4:5])
+         if re.search('(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})', pattern):
+            target = target + pattern
 
+      if (hostonly):
+         output = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".txt"
+         outputfile = open(output, "w")
+         outputfile.write("Reachable hosts at " + scanarea)
+         for ip in target:
+            outputfile.write("\n".join(ip))
+      else:
+         #xmlFile
+         print("ToDo")
 
-#   tempFile = tempfile.TemporaryFile(mode='w+t')
-#   try:
-#      tempFile.writelines(['first\n', 'second\n'])
-#      tempFile.seek(0)
-#
-#    for line in tempFile:
-#        print line.rstrip()
-#
-#   finally:
-#      tempFile.close()
-#
-   #os.system(bashCommand)
-   #${nMAP} ${pre_switch} | awk '/^Nmap scan/{print $5}' > ${tempFile}
-
-   if not (hostonly):
-      print("")
-      #${nMAP} ${post_switch} > ${OUTPUT}.log 2> ${OUTPUT}.err
-   else:
-      print("")
-      #mv ${tempFile} ${OUTPUT}.txt
-
-   #rm -f ${tempFile}
+   except:
+      print("ERROR: Can't create tmp-File")
 
 #----------------------------------------------------------------------------#
 # main function
@@ -233,11 +225,11 @@ def main(argv):
    print('Enhanced NMAP Reporting:\n------------------------')
 
    CheckOS()
-   CheckFunction()
    getParameter(argv)
+   CheckFunction()
    nmap()
 
-   print('ENDE ;)')
+   print('-------------\n\rScan finished')
 
 if __name__ == "__main__":
    main(sys.argv[1:])

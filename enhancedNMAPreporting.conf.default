@@ -8,7 +8,6 @@ xslProc:    /bin/xsltproc
 mainDir:    /opt/enr
 nsaDir:     /opt/enr/nsa
 workDir:    /opt/enr/output
-tempDir:    /var/tmp
 
 [externalToolsWindows]
 nMAP:       /usr/bin/nmap
@@ -18,4 +17,3 @@ xslProc:    /bin/xsltproc
 mainDir:    <tbd>/enr
 nsaDir:     <tbd>/nsa
 workDir:    <tbd>/output
-tempDir:    /windows/temp
