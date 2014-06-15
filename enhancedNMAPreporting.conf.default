@@ -1,12 +1,16 @@
 #= Enhanced NMAP Reporting - Configuration File =============================#
 
+[nmapParameter]
+tlsPorts:   25,110,143,443,465,587,993,995
+cusCom:     -vv
+
 [externalToolsLinux]
 nMAP:       /usr/bin/nmap
 xslProc:    /bin/xsltproc
 
 [PathVariablesLinux]
 mainDir:    /opt/enr
-nsaDir:     /opt/enr/nsa
+nseDir:     /opt/enr/nse
 workDir:    /opt/enr/output
 
 [externalToolsWindows]
@@ -18,7 +22,7 @@ mainDir:    <tbd>/enr
 nsaDir:     <tbd>/nsa
 workDir:    <tbd>/output
 
-[nmapSSLnsaScripts]
+[nmapSSLnseScripts]
 url:        http://nmap.org/svn/scripts/
 script.1:   ssl-cert.nse
 script.2:   ssl-enum-ciphers.nse

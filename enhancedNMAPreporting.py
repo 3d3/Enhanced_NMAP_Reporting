@@ -151,6 +151,7 @@ def getParameter(argv):
    global post_tswitch
    global hostonly
    global tlsPorts
+
    global cusCom
 
    (options, args) = parser.parse_args()
@@ -218,10 +219,11 @@ def nseCheck():
 #----------------------------------------------------------------------------#
 # namp scan
 def nmap():
-   output = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".txt"
-   xmlFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".xml "
-   logFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".log"
-   errFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".err"
+   output = workDir + "/enr_" + time.strftime("%Y%m%d_%H%M") + ".txt"
+   xmlFile = workDir + "/enr_" + time.strftime("%Y%m%d_%H%M") + ".xml "
+   logFile = workDir + "/enr_" + time.strftime("%Y%m%d_%H%M") + ".log"
+   errFile = workDir + "/enr_" + time.strftime("%Y%m%d_%H%M") + ".err"
+   htmlFile = workDir + "/enr_" + time.strftime("%Y%m%d_%H%M") + ".html"
 
    tmpFile = tempfile.NamedTemporaryFile()
    scanArea = ""
@@ -248,10 +250,8 @@ def nmap():
       outputfile.close()
    else:
       print("Start with fast nmap scan on discover hosts")
-      os.system("cd /opt/enr/nse && " + nMAP + post_switch + " -oX " + xmlFile + target +
-                " > " + logFile + " 2> " + errFile)
-
-      htmlFile = workDir + "/enr_" + time.strftime("%Y.%m.%d_%H%M") + ".html"
+      os.system("cd /opt/enr/nse && " + nMAP + post_switch + " -oX " +
+                xmlFile + target + " > " + logFile + " 2> " + errFile)
 
       os.system(xslProc + " " + xmlFile + "-o " + htmlFile + " 2> " + errFile)
 
