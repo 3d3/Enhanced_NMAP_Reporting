@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#= Enhanced NMAP Reporting ==================================================#
+#= xml2csv ================================================================#
 # author:   Markus Edelhofer
 # author:   Hannes Trunde
 # date:     2014-06-15
@@ -8,7 +8,7 @@
 # Script Basis:
 #   URI: http://blog.poultonfam.com/brad/2010/02/24/python-nmap-xml-parser/
 #   Datum: 2014-06-15
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 
 __author__ = 'Markus Edelhofer, Hannes Trunde'
 
@@ -17,16 +17,16 @@ import time
 from optparse import OptionParser
 from xml.dom.minidom import parse, parseString
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # check python version
 if sys.version_info[0] != 2:
    print "\n\rThis script is only tested with Python 2.7\n\r"
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # variables for formating
 ishostname = False
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # get parameter
 def getParameter(argv):
    global args
@@ -37,7 +37,7 @@ def getParameter(argv):
       print("Error: no xml-File selected!")
       sys.exit(1)
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # create output
 def ouput():
    global outputFile
@@ -45,7 +45,7 @@ def ouput():
    outputFileName = prefix + '.csv'
    outputFile = open(outputFileName, 'a')
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # xml parser
 def xmlParser(node):
    global ishostname
@@ -137,20 +137,21 @@ def xmlParser(node):
                  outputFile.write(subsubnode.nodeValue)
                  outputFile.write(',')
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # generate report
 def report(args):
    global lastHostName
    xml = parse(args)
 
-   #-------------------------------------------------------------------------#
+   #-----------------------------------------------------------------------#
    # head line
-   outputFile.write('nmap Report:,' + time.strftime("%Y-%m-%d %H:%M") + '\n')
+   outputFile.write('nmap Report:,' + time.strftime("%Y-%m-%d %H:%M") +
+                    '\n')
    outputFile.write('IP-Address,DNS-Name,Open Port(s),Protocol,Middleware,'
-                    'Version,Operating system,ssl-cert,ssl-cert-ca,notBefore,'
-                    'notAfter,SHA1,\n')
+                    'Version,Operating system,ssl-cert,ssl-cert-ca,'
+                    'notBefore,notAfter,SHA1,\n')
 
-   #-------------------------------------------------------------------------#
+   #-----------------------------------------------------------------------#
    for node in xml.getElementsByTagName('host'):
       lastHostName = ""
       for subnode in node.childNodes:
@@ -171,13 +172,13 @@ def report(args):
    xml.unlink()
    outputFile.close()
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # run as import
 def run_xml_to_csv(argv):
    ouput()
    report(args[0])
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # main function
 def main(argv):
    getParameter(argv)
@@ -186,4 +187,4 @@ def main(argv):
 if __name__ == "__main__":
    main(sys.argv[1:])
 
-#============================================================================#
+#==========================================================================#

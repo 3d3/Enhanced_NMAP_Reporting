@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-#= Enhanced NMAP Reporting ==================================================#
+#= Enhanced NMAP Reporting ================================================#
 # author:   Markus Edelhofer
 # author:   Hannes Trunde
 # date:     2014-06-08
 #           FH Technikum Wien
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 
 __author__ = 'Markus Edelhofer, Hannes Trunde'
 
@@ -18,12 +18,12 @@ import tempfile
 import ConfigParser
 from optparse import OptionParser
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # check python version
 if sys.version_info[0] != 2:
    print "\n\rThis script is only tested with Python 2.7\n\r"
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # load config file
 try:
    config = ConfigParser.ConfigParser()
@@ -32,7 +32,7 @@ except:
     print('ERROR: Configuration File not found!')
     sys.exit(1)
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # variables
 verbose = False
 xmlFile = ""
@@ -41,7 +41,7 @@ pre_switch = " -T4 -sP -n"
 post_switch = " -vv -T4 --open --host-timeout 30m"
 post_tswitch = " -sS --top-ports 3328"
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # check OS
 def CheckOS():
    osVar = platform.system()
@@ -78,7 +78,7 @@ def CheckOS():
       print('ERROR: Wrong OS')
       sys.exit(1)
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # check function
 def CheckFunction():
    global checkXSLPROC
@@ -126,7 +126,7 @@ def CheckFunction():
          print('END')
       sys.exit(1)
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # get parameter
 def getParameter(argv):
    parser = OptionParser("enhancedNMAPreporting.py [options] IP-Addresses")
@@ -146,10 +146,12 @@ def getParameter(argv):
                      default=False, help="UDP service scan")
    parser.add_option("--ho", action="store_true", dest="optHO",
                      default=False, help="Host only detection")
-   parser.add_option("--customcommand", action="store_true", dest="optCusCom",
-                     default=False, help="Custom nmap parameter")
-   parser.add_option("--customport", action="store_true", dest="optCusPrt",
-                     default=False, help="Custom Ports to scan")
+   parser.add_option("--customcommand", action="store_true",
+                     dest="optCusCom", default=False,
+                     help="Custom nmap parameter")
+   parser.add_option("--customport", action="store_true",
+                     dest="optCusPrt",default=False,
+                     help="Custom Ports to scan")
 
    global verbose
    global args
@@ -175,7 +177,8 @@ def getParameter(argv):
       post_tswitch = " -sS -p-"
 
    if (options.optSSL):
-      post_switch = post_switch + " --script " + nseDir  + " -d -p" + tlsPorts
+      post_switch = post_switch + " --script " + nseDir  + " -d -p" +\
+                    tlsPorts
 
    if (options.optCusCom):
       post_switch = post_switch + " " + cusCom
@@ -198,10 +201,11 @@ def getParameter(argv):
       post_switch = post_switch + post_tswitch
 
    if(len(args) < 1):
-      print("Error: no IP-Address specified, use --help for more information")
+      print("Error: no IP-Address specified, use --help "
+            "for more information")
       sys.exit(1)
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # nmap nse scripts
 def nseCheck():
    getconf = True
@@ -228,7 +232,7 @@ def nseCheck():
 
    return returnCode
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # namp scan
 def nmap():
    output = workDir + "/enr_" + time.strftime("%Y%m%d_%H%M") + ".txt"
@@ -274,7 +278,7 @@ def nmap():
          print("Start to convert xml to csv ...")
          os.system(xml2csv + " " + xmlFile)
 
-#----------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
 # main function
 def main(argv):
    print('Enhanced NMAP Reporting:\n------------------------')
@@ -289,4 +293,4 @@ def main(argv):
 if __name__ == "__main__":
    main(sys.argv[1:])
 
-#============================================================================#
+#==========================================================================#
