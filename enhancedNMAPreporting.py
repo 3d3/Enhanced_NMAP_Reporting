@@ -18,6 +18,8 @@ import tempfile
 import ConfigParser
 from optparse import OptionParser
 
+from xml_to_csv import run_xml_to_csv
+
 #----------------------------------------------------------------------------#
 # check python version
 if sys.version_info[0] != 2:
@@ -79,8 +81,9 @@ def CheckOS():
 #----------------------------------------------------------------------------#
 # check function
 def CheckFunction():
+   global checkXSLPROC = os.path.isfile(xslProc)
+
    checkNMAP = os.path.isfile(nMAP)
-   checkXSLPROC = os.path.isfile(xslProc)
    checkMAINDIR = os.path.isdir(mainDir)
    checkNSEDIR = os.path.isdir(nseDir)
    checkWORKDIR = os.path.isdir(workDir)
@@ -111,8 +114,7 @@ def CheckFunction():
       print('Check nse Scripts ........ ' + str(nseCheck()));
       print('-------------------------------')
 
-   if not (checkUID and checkNMAP and checkXSLPROC and checkMAINDIR and
-              checkNSEDIR):
+   if not (checkUID and checkNMAP and checkMAINDIR and checkNSEDIR):
       if not (verbose):
          print('ERROR: Use -v for more Information')
       else:
@@ -131,8 +133,6 @@ def getParameter(argv):
                      default=False, help="scan for all ports")
    parser.add_option("-s", "--ssl", action="store_true", dest="optSSL",
                      default=False, help="mix of SSL checks")
-   parser.add_option("-c", "--custom", action="store_true", dest="optCUS",
-                     default=False, help="Custom nmap parameter")
    parser.add_option("-v", action="store_true", dest="optVERB",
                      default=False, help="Schwafelmodus")
    parser.add_option("--ext", action="store_true", dest="optEXT",
@@ -143,6 +143,10 @@ def getParameter(argv):
                      default=False, help="UDP service scan")
    parser.add_option("--ho", action="store_true", dest="optHO",
                      default=False, help="Host only detection")
+   parser.add_option("--customcommand", action="store_true", dest="optCusCom",
+                     default=False, help="Custom nmap parameter")
+   parser.add_option("--customport", action="store_true", dest="optCusPrt",
+                     default=False, help="Custom Ports to scan")
 
    global verbose
    global args
@@ -152,7 +156,8 @@ def getParameter(argv):
    global hostonly
    global tlsPorts
 
-   global cusCom
+   global optCusCom
+   global optCusPrt
 
    (options, args) = parser.parse_args()
    verbose = options.optVERB
@@ -172,6 +177,9 @@ def getParameter(argv):
    if (options.optCUS):
       post_switch = post_switch + " " + cusCom
 
+   if (options.optCUS):
+      post_switch = post_switch + " -p " + optCusPrt
+
    if (options.optEXT):
       post_switch = post_switch + " -sV --version-all -O"
    else:
@@ -187,7 +195,8 @@ def getParameter(argv):
       print("Error: no IP-Address specified, use --help for more information")
       sys.exit(1)
 
-   post_switch = post_switch + post_tswitch
+   if not (optCusPrt):
+      post_switch = post_switch + post_tswitch
 
 #----------------------------------------------------------------------------#
 # nmap nse scripts
@@ -253,7 +262,9 @@ def nmap():
       os.system("cd /opt/enr/nse && " + nMAP + post_switch + " -oX " +
                 xmlFile + target + " > " + logFile + " 2> " + errFile)
 
-      os.system(xslProc + " " + xmlFile + "-o " + htmlFile + " 2> " + errFile)
+      if(checkXSLPROC):
+         print("Build html File")
+         os.system(xslProc + " " + xmlFile + "-o " + htmlFile + " 2> " + errFile)
 
 #----------------------------------------------------------------------------#
 # main function
@@ -264,6 +275,7 @@ def main(argv):
    getParameter(argv)
    CheckFunction()
    nmap()
+   run_xml_to_csv(xmlFile)
 
    print('Scan finished.')
 

@@ -14,6 +14,7 @@ __author__ = 'Markus Edelhofer, Hannes Trunde'
 
 import sys
 import time
+from array import array
 from optparse import OptionParser
 from xml.dom.minidom import parse, parseString
 
@@ -65,20 +66,31 @@ def ouput():
 # xml parser
 def xmlParser(node):
    global ishostname
+   global isIP
+   global lastIP
+   global lastHostName
 
    if node.nodeName == 'hostname':
-      outputFile.write(node.getAttribute('name'))
-      outputFile.write(',')
       ishostname = True
+      lastHostName = node.getAttribute('name')
+      outputFile.write(lastHostName)
+      outputFile.write(',')
 
    elif node.nodeName == 'address':
       if 'ip' in node.getAttribute('addrtype'):
+         isIP = True
+         lastIP = node.getAttribute('addr')
          outputFile.write('\n')
          outputFile.write(node.getAttribute('addr'))
          outputFile.write(',')
 
    elif node.nodeName == "port":
+      if not isIP:
+         outputFile.write(lastIP)
+         outputFile.write(',')
+         isIP = True
       if not ishostname:
+         outputFile.write(lastHostName)
          outputFile.write(',')
          ishostname = True
       ports.append(node.getAttribute("portid"))
@@ -87,6 +99,7 @@ def xmlParser(node):
 
    elif node.nodeName == "service":
       ishostname = False
+      isIP = False
       protocol.append(node.getAttribute("name"))
       outputFile.write(node.getAttribute('name'))
       outputFile.write(',')
@@ -102,6 +115,7 @@ def xmlParser(node):
       extraInfo.append(node.getAttribute("extrainfo"))
       outputFile.write(node.getAttribute('extrainfo'))
       outputFile.write(',')
+      outputFile.write('\n')
 
    #elif node.nodeName == 'script':
       #sslcert.append(node.getAttribute("output"))
@@ -127,21 +141,18 @@ def xmlParser(node):
 #----------------------------------------------------------------------------#
 # generate report
 def report(args):
-
+   global lastHostName
    xml = parse(args)
-   outputFile.write('nmap Report:,' + time.strftime("%Y-%m-%d %H:%M") + '\n')
 
    #-------------------------------------------------------------------------#
    # head line
+   outputFile.write('nmap Report:,' + time.strftime("%Y-%m-%d %H:%M") + '\n')
    outputFile.write('IP-Address,DNS-Name,Open Port(s),Protocol,Middleware,')
    outputFile.write('Version,Operating system,ssl-cert,ssl-enum-ciphers\n')
 
    #-------------------------------------------------------------------------#
-   scaninfo = xml.getElementsByTagName('nmaprun')[0]
-   date = scaninfo.getAttribute("startstr")
-   args = scaninfo.getAttribute('args')
-
    for node in xml.getElementsByTagName('host'):
+      lastHostName = ""
       for subnode in node.childNodes:
          if subnode.attributes is not None:
             xmlParser(subnode)
@@ -153,16 +164,20 @@ def report(args):
                             for subsubsubnode in subsubnode.childNodes:
                                 if subsubsubnode.attributes is not None:
                                     xmlParser(subsubsubnode)
-
    xml.unlink()
    outputFile.close()
 
 #----------------------------------------------------------------------------#
-# main function
-def main(argv):
+# run as import
+def run_xml_to_csv(argv):
    getParameter(argv)
    ouput()
    report(args[0])
+
+#----------------------------------------------------------------------------#
+# main function
+def main(argv):
+   run_xml_to_csv(argv)
 
 if __name__ == "__main__":
    main(sys.argv[1:])
