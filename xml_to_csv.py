@@ -14,7 +14,6 @@ __author__ = 'Markus Edelhofer, Hannes Trunde'
 
 import sys
 import time
-from array import array
 from optparse import OptionParser
 from xml.dom.minidom import parse, parseString
 
@@ -22,22 +21,6 @@ from xml.dom.minidom import parse, parseString
 # check python version
 if sys.version_info[0] != 2:
    print "\n\rThis script is only tested with Python 2.7\n\r"
-
-#----------------------------------------------------------------------------#
-# variables                # xml tag
-ip = ''                    # address / addr
-dnsName = ''               # hostnames
-ports = []                 # port / portid
-protocol = []              # port / service / name
-middleware = []            # port / service / product
-version = []               # port / service / version
-extraInfo = []             # port / service / extrainfo  (OS ?)
-sslcert = []               # script / output --> Subject
-sslCommonName = []         # script / output --> Issuer ; commonName
-ssldateBefore = []         # script / output --> Issuer ; Not valid before
-ssldateAfter = []          # script / output --> Issuer ; Not valid after
-sslSHA1 = []               # script / output --> Issuer ; SHA-1
-sslenumciphers = []        #
 
 #----------------------------------------------------------------------------#
 # variables for formating
@@ -66,6 +49,7 @@ def ouput():
 # xml parser
 def xmlParser(node):
    global ishostname
+   global isCoIu
    global isIP
    global lastIP
    global lastHostName
@@ -86,6 +70,7 @@ def xmlParser(node):
 
    elif node.nodeName == "port":
       if not isIP:
+         outputFile.write('\n')
          outputFile.write(lastIP)
          outputFile.write(',')
          isIP = True
@@ -93,50 +78,64 @@ def xmlParser(node):
          outputFile.write(lastHostName)
          outputFile.write(',')
          ishostname = True
-      ports.append(node.getAttribute("portid"))
       outputFile.write(node.getAttribute("portid"))
       outputFile.write(',')
 
    elif node.nodeName == "service":
       ishostname = False
       isIP = False
-      protocol.append(node.getAttribute("name"))
       outputFile.write(node.getAttribute('name'))
       outputFile.write(',')
-
-      middleware.append(node.getAttribute("product"))
       outputFile.write(node.getAttribute('product'))
       outputFile.write(',')
-
-      version.append(node.getAttribute("version"))
       outputFile.write(node.getAttribute('version'))
       outputFile.write(',')
-
-      extraInfo.append(node.getAttribute("extrainfo"))
       outputFile.write(node.getAttribute('extrainfo'))
       outputFile.write(',')
-      outputFile.write('\n')
+      #outputFile.write('\n')
 
-   #elif node.nodeName == 'script':
-      #sslcert.append(node.getAttribute("output"))
-      #outputFile.write(node.getAttribute('output'))
-      #outputFile.write(',')
+   elif node.nodeName == 'script':
+      isCoIu = False
+      for subnode in node.childNodes:
+         if subnode.nodeName == 'table':
+            if subnode.getAttribute("key") == 'subject':
+               for subsubnode in subnode.childNodes:
+                  if subsubnode.nodeName == 'elem':
+                     if subsubnode.getAttribute("key") == 'commonName':
+                        for subsubsubnode in subsubnode.childNodes:
+                           outputFile.write(subsubsubnode.nodeValue)
+                           outputFile.write(',')
+            if subnode.getAttribute("key") == 'issuer':
+               for subsubnode in subnode.childNodes:
+                  if subsubnode.nodeName == 'elem':
+                     if subsubnode.getAttribute("key") == 'commonName':
+                        for subsubsubnode in subsubnode.childNodes:
+                           outputFile.write(subsubsubnode.nodeValue)
+                           outputFile.write(',')
+                           isCoIu = True
 
-      #sslCommonName.append(node.getAttribute("output"))
-      #outputFile.write(node.getAttribute('output'))
-      #outputFile.write(',')
-
-      #ssldateBefore.append(node.getAttribute("output"))
-      #outputFile.write(node.getAttribute('output'))
-      #outputFile.write(',')
-
-      #ssldateAfter.append(node.getAttribute("output"))
-      #outputFile.write(node.getAttribute('output'))
-      #outputFile.write(',')
-
-      #sslSHA1.append(node.getAttribute("output"))
-      #outputFile.write(node.getAttribute('output'))
-      #outputFile.write(',')
+            if subnode.getAttribute("key") == 'validity':
+               for subsubnode in subnode.childNodes:
+                  if subsubnode.nodeName == 'elem':
+                     if subsubnode.getAttribute("key") == 'notBefore':
+                        for subsubsubnode in subsubnode.childNodes:
+                           if not isCoIu:
+                              outputFile.write(',')
+                              isCoIu = True;
+                           outputFile.write(subsubsubnode.nodeValue)
+                           outputFile.write(',')
+                     if subsubnode.getAttribute("key") == 'notAfter':
+                        for subsubsubnode in subsubnode.childNodes:
+                           if not isCoIu:
+                              outputFile.write(',')
+                              isCoIu = True;
+                           outputFile.write(subsubsubnode.nodeValue)
+                           outputFile.write(',')
+         if subnode.nodeName == 'elem':
+            if subnode.getAttribute("key") == 'sha1':
+              for subsubnode in subnode.childNodes:
+                 outputFile.write(subsubnode.nodeValue)
+                 outputFile.write(',')
 
 #----------------------------------------------------------------------------#
 # generate report
@@ -147,8 +146,9 @@ def report(args):
    #-------------------------------------------------------------------------#
    # head line
    outputFile.write('nmap Report:,' + time.strftime("%Y-%m-%d %H:%M") + '\n')
-   outputFile.write('IP-Address,DNS-Name,Open Port(s),Protocol,Middleware,')
-   outputFile.write('Version,Operating system,ssl-cert,ssl-enum-ciphers\n')
+   outputFile.write('IP-Address,DNS-Name,Open Port(s),Protocol,Middleware,'
+                    'Version,Operating system,ssl-cert,ssl-cert-ca,notBefore,'
+                    'notAfter,SHA1,\n')
 
    #-------------------------------------------------------------------------#
    for node in xml.getElementsByTagName('host'):
@@ -157,26 +157,30 @@ def report(args):
          if subnode.attributes is not None:
             xmlParser(subnode)
             if len(subnode.childNodes) > 0:
-                for subsubnode in subnode.childNodes:
-                    if subsubnode.attributes is not None:
-                        xmlParser(subsubnode)
-                        if len(subsubnode.childNodes) > 0:
-                            for subsubsubnode in subsubnode.childNodes:
-                                if subsubsubnode.attributes is not None:
-                                    xmlParser(subsubsubnode)
+               for subsubnode in subnode.childNodes:
+                  if subsubnode.attributes is not None:
+                     xmlParser(subsubnode)
+                     if len(subsubnode.childNodes) > 0:
+                        for subsubsubnode in subsubnode.childNodes:
+                           if subsubsubnode.attributes is not None:
+                              xmlParser(subsubsubnode)
+                              if len(subsubsubnode.childNodes) > 0:
+                                 for subsubsubsubnode in subsubsubnode.childNodes:
+                                    if subsubsubsubnode.attributes is not None:
+                                       xmlParser(subsubsubsubnode)
    xml.unlink()
    outputFile.close()
 
 #----------------------------------------------------------------------------#
 # run as import
 def run_xml_to_csv(argv):
-   getParameter(argv)
    ouput()
    report(args[0])
 
 #----------------------------------------------------------------------------#
 # main function
 def main(argv):
+   getParameter(argv)
    run_xml_to_csv(argv)
 
 if __name__ == "__main__":

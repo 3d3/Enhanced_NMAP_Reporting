@@ -18,8 +18,6 @@ import tempfile
 import ConfigParser
 from optparse import OptionParser
 
-from xml_to_csv import run_xml_to_csv
-
 #----------------------------------------------------------------------------#
 # check python version
 if sys.version_info[0] != 2:
@@ -49,6 +47,7 @@ def CheckOS():
    osVar = platform.system()
    global nMAP
    global xslProc
+   global xml2csv
    global mainDir
    global nseDir
    global workDir
@@ -61,6 +60,7 @@ def CheckOS():
    if(osVar == 'Linux'):
       nMAP = config.get("externalToolsLinux", "nMAP")
       xslProc = config.get("externalToolsLinux", "xslProc")
+      xml2csv = config.get("externalToolsLinux", "xml2csv")
 
       mainDir = config.get("PathVariablesLinux", "mainDir")
       nseDir = config.get("PathVariablesLinux", "nseDir")
@@ -81,9 +81,13 @@ def CheckOS():
 #----------------------------------------------------------------------------#
 # check function
 def CheckFunction():
-   global checkXSLPROC = os.path.isfile(xslProc)
+   global checkXSLPROC
+   global checkXML2CSV
 
    checkNMAP = os.path.isfile(nMAP)
+   checkXSLPROC = os.path.isfile(xslProc)
+   checkXML2CSV = os.path.isfile(xml2csv)
+
    checkMAINDIR = os.path.isdir(mainDir)
    checkNSEDIR = os.path.isdir(nseDir)
    checkWORKDIR = os.path.isdir(workDir)
@@ -100,6 +104,7 @@ def CheckFunction():
       print('Check if root ............ ' + str(checkUID));
       print('Check nmap ............... ' + str(checkNMAP));
       print('Check xsltproc ........... ' + str(checkXSLPROC));
+      print('Check xml_to_csv.py....... ' + str(checkXML2CSV));
       print('Check main  Directory .... ' + str(checkMAINDIR));
       print('Check nse Directory ...... ' + str(checkNSEDIR));
       if not checkNSEDIR:
@@ -174,10 +179,10 @@ def getParameter(argv):
    if (options.optSSL):
       post_switch = post_switch + " --script " + nseDir  + " -d -p" + tlsPorts
 
-   if (options.optCUS):
+   if (options.optCusCom):
       post_switch = post_switch + " " + cusCom
 
-   if (options.optCUS):
+   if (options.optCusPrt):
       post_switch = post_switch + " -p " + optCusPrt
 
    if (options.optEXT):
@@ -191,12 +196,12 @@ def getParameter(argv):
    if(options.optSU):
       post_switch = post_switch + " -sU --top-ports 15094"
 
+   if not options.optCusPrt:
+      post_switch = post_switch + post_tswitch
+
    if(len(args) < 1):
       print("Error: no IP-Address specified, use --help for more information")
       sys.exit(1)
-
-   if not (optCusPrt):
-      post_switch = post_switch + post_tswitch
 
 #----------------------------------------------------------------------------#
 # nmap nse scripts
@@ -258,13 +263,18 @@ def nmap():
       outputfile.write(str(target))
       outputfile.close()
    else:
-      print("Start with fast nmap scan on discover hosts")
+      print("Start with fast nmap scan on discover hosts ...")
       os.system("cd /opt/enr/nse && " + nMAP + post_switch + " -oX " +
                 xmlFile + target + " > " + logFile + " 2> " + errFile)
 
       if(checkXSLPROC):
-         print("Build html File")
-         os.system(xslProc + " " + xmlFile + "-o " + htmlFile + " 2> " + errFile)
+         print("Build html File ...")
+         os.system(xslProc + " " + xmlFile + "-o " + htmlFile + " 2> " +
+                   errFile)
+
+      if checkXML2CSV:
+         print("Start to convert xml to csv ...")
+         os.system(xml2csv + " " + xmlFile)
 
 #----------------------------------------------------------------------------#
 # main function
@@ -275,7 +285,6 @@ def main(argv):
    getParameter(argv)
    CheckFunction()
    nmap()
-   run_xml_to_csv(xmlFile)
 
    print('Scan finished.')
 
