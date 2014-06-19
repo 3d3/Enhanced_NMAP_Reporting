@@ -16,6 +16,21 @@ Supported OS:
  Tested OS:
  - Fedora 20
 
-Planed features:
+==============================================================================
 
- - Network Reports (Ports, Services)
+Enhanced NMAP Reporting:
+------------------------
+Usage: enhancedNMAPreporting.py [options] IP-Addresses
+
+Options:
+  -h, --help       show this help message and exit
+  -w, --wan        Scan over Internet
+  -a, --all        scan for all ports
+  -s, --ssl        mix of SSL checks
+  -v               Schwafelmodus
+  --ext            DNS, OS and Version detection
+  --PU             UDP host detection
+  --sU             UDP service scan
+  --ho             Host only detection
+  --customcommand  Custom nmap parameter
+  --customport     Custom Ports to scan

@@ -125,8 +125,6 @@ def CheckFunction():
       else:
          print('END')
       sys.exit(1)
-   #else:
-   #   print('Environment OK, start scan ...')
 
 #----------------------------------------------------------------------------#
 # get parameter
@@ -196,7 +194,7 @@ def getParameter(argv):
    if(options.optSU):
       post_switch = post_switch + " -sU --top-ports 15094"
 
-   if not options.optCusPrt:
+   if not options.optCusPrt or options.optSSL:
       post_switch = post_switch + post_tswitch
 
    if(len(args) < 1):
