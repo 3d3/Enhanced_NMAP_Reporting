@@ -105,6 +105,7 @@ def xmlParser(node):
                         for subsubsubnode in subsubnode.childNodes:
                            outputFile.write(subsubsubnode.nodeValue)
                            outputFile.write(',')
+
             if subnode.getAttribute("key") == 'issuer':
                for subsubnode in subnode.childNodes:
                   if subsubnode.nodeName == 'elem':
@@ -113,6 +114,18 @@ def xmlParser(node):
                            outputFile.write(subsubsubnode.nodeValue)
                            outputFile.write(',')
                            isCoIu = True
+
+            if subnode.getAttribute("key") == 'pubkey':
+               for subsubnode in subnode.childNodes:
+                  if subsubnode.nodeName == 'elem':
+                     if subsubnode.getAttribute("key") == 'bits':
+                        for subsubsubnode in subsubnode.childNodes:
+                           outputFile.write(subsubsubnode.nodeValue)
+                           outputFile.write(',')
+                     if subsubnode.getAttribute("key") == 'type':
+                        for subsubsubnode in subsubnode.childNodes:
+                           outputFile.write(subsubsubnode.nodeValue)
+                           outputFile.write(',')
 
             if subnode.getAttribute("key") == 'validity':
                for subsubnode in subnode.childNodes:
@@ -128,9 +141,10 @@ def xmlParser(node):
                         for subsubsubnode in subsubnode.childNodes:
                            if not isCoIu:
                               outputFile.write(',')
-                              isCoIu = True;
+                              isCoIu = True;bits
                            outputFile.write(subsubsubnode.nodeValue)
                            outputFile.write(',')
+
          if subnode.nodeName == 'elem':
             if subnode.getAttribute("key") == 'sha1':
               for subsubnode in subnode.childNodes:
@@ -148,8 +162,9 @@ def report(args):
    outputFile.write('nmap Report:,' + time.strftime("%Y-%m-%d %H:%M") +
                     '\n')
    outputFile.write('IP-Address,DNS-Name,Open Port(s),Protocol,Middleware,'
-                    'Version,Operating system,ssl-cert,ssl-cert-ca,'
-                    'notBefore,notAfter,SHA1,\n')
+                    'Version,Operating system,ssl-commonName (cn),'
+                    'ssl-issuer-ca,pubkey length,pubkey type,notBefore,'
+                    'notAfter,SHA1,\n')
 
    #-----------------------------------------------------------------------#
    for node in xml.getElementsByTagName('host'):

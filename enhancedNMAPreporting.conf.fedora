@@ -8,7 +8,7 @@ cusCom:     -vv
 [externalToolsLinux]
 nMAP:       /usr/bin/nmap
 xslProc:    /bin/xsltproc
-xml2csv:    /home/markus/Documents/PyhtonSoureCode/Enhanced_NMAP_Reporting/xml2csv.py
+xml2csv:    /opt/enr/xml_to_csv.py
 
 [PathVariablesLinux]
 mainDir:    /opt/enr
@@ -29,6 +29,7 @@ url:        http://nmap.org/svn/scripts/
 script.1:   ssl-cert.nse
 script.2:   ssl-enum-ciphers.nse
 script.3:   sslv2.nse
-script.4:   ssl-known-key.nse
-script.5:   ssl-heartbleed.nse
-script.6:   ssl-ccs-injection.nse
+script.4:   sshv1.nse
+script.5:   ssl-known-key.nse
+script.6:   ssl-heartbleed.nse
+script.7:   ssl-ccs-injection.nse
