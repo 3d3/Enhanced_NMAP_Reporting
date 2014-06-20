@@ -168,22 +168,22 @@ def report(args):
 
    #-----------------------------------------------------------------------#
    for node in xml.getElementsByTagName('host'):
-      lastHostName = ""
-      for subnode in node.childNodes:
-         if subnode.attributes is not None:
-            xmlParser(subnode)
-            if len(subnode.childNodes) > 0:
-               for subsubnode in subnode.childNodes:
-                  if subsubnode.attributes is not None:
-                     xmlParser(subsubnode)
-                     if len(subsubnode.childNodes) > 0:
-                        for subsubsubnode in subsubnode.childNodes:
-                           if subsubsubnode.attributes is not None:
-                              xmlParser(subsubsubnode)
-                              if len(subsubsubnode.childNodes) > 0:
-                                 for subsubsubsubnode in subsubsubnode.childNodes:
-                                    if subsubsubsubnode.attributes is not None:
-                                       xmlParser(subsubsubsubnode)
+     lastHostName = ""
+     for subnode in node.childNodes:
+       if subnode.attributes is not None:
+         xmlParser(subnode)
+         if len(subnode.childNodes) > 0:
+           for subsubnode in subnode.childNodes:
+             if subsubnode.attributes is not None:
+               xmlParser(subsubnode)
+               if len(subsubnode.childNodes) > 0:
+                 for subsubsubnode in subsubnode.childNodes:
+                   if subsubsubnode.attributes is not None:
+                     xmlParser(subsubsubnode)
+                     if len(subsubsubnode.childNodes) > 0:
+                       for subsubsubsubnode in subsubsubnode.childNodes:
+                         if subsubsubsubnode.attributes is not None:
+                           xmlParser(subsubsubsubnode)
    xml.unlink()
    outputFile.close()
 

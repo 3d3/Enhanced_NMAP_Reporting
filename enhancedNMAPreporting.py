@@ -195,10 +195,10 @@ def getParameter(argv):
    if(options.optSU):
       post_switch = post_switch + " -sU --top-ports 15094"
 
-   if not options.optEXT or not options.optSSL:
+   if not (options.optEXT or options.optSSL):
       post_switch = post_switch + " -n"
 
-   if not options.optCusPrt or not options.optSSL:
+   if not options.optCusPrt:
       post_switch = post_switch + post_tswitch
 
    if(len(args) < 1):
